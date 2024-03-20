@@ -24,4 +24,11 @@ $routes->group('/admin', ['filter' => 'adminAuth'], static function ($route) {
     $route->post('employee/update/(:num)', "Employees::add/$1");
     $route->get('employee/delete/(:num)', "Employees::delete/$1");
     $route->get('employee/undo-delete/(:num)', "Employees::undoDelete/$1");
+
+    //leads
+    $route->get('lead/get', "Leads::get");
+    $route->post('lead/add', "Leads::add");
+    $route->post('lead/update/(:num)', "Leads::add/$1");
+    $route->get('lead/delete/(:num)', "Leads::delete/$1");
+    $route->get('lead/undo-delete/(:num)', "Leads::undoDelete/$1");
 });
