@@ -22,9 +22,13 @@ class Employees extends ResourceController
         $rules = [
             'name'     => 'required',
             'contact'  => 'required|numeric',
-            'address'  => 'required',
-            'password' => 'required'
+            'address'  => 'required'
         ];
+
+        // Add password validation if $id is null
+        if (!$id) {
+            $rules['password'] = 'required';
+        }
 
         if (!$this->validate($rules)) {
             return $this->respond(['message' => $this->validator->getErrors(), 'success' => false]);
@@ -36,11 +40,8 @@ class Employees extends ResourceController
 
         // Check if contact already exists, including soft deleted records
         if ($id) {
-            $existingEmployee = $userModel
-                ->where('contact', $contact)
-                ->where('id !=', $id)
-                ->orWhere('contact', $contact) // Check also if the contact exists in soft deleted records
-                ->countAllResults();
+            // If $id is not null, no need to check for existing contact for the same user
+            $existingEmployee = 0;
         } else {
             $existingEmployee = $userModel
                 ->where('contact', $contact)
@@ -56,18 +57,22 @@ class Employees extends ResourceController
             'name'     => $this->request->getPost('name'),
             'contact'  => $contact,
             'address'  => $this->request->getPost('address'),
-            'password' => md5($this->request->getPost('password')),
-            'user_type' => 'employee' // Assuming default user type is employee
+            // Add user_type only if not updating
+            'user_type' => (!$id) ? 'employee' : null
         ];
 
-        if ($id) {
-            $userModel->update($id, $userData);
-        } else {
+        if (!$id) {
+            // If $id is null, insert a new record
+            $userData['password'] = md5($this->request->getPost('password'));
             $userModel->insert($userData);
+        } else {
+            // If $id is not null, update the existing record
+            $userModel->update($id, $userData);
         }
 
-        return $this->respond(['success' => true, 'message' => 'Employee added successfully']);
+        return $this->respond(['success' => true, 'message' => 'Employee ' . ($id ? 'updated' : 'added') . ' successfully']);
     }
+
 
 
     public function delete($id = null)
