@@ -44,4 +44,7 @@ $routes->group('/admin', ['filter' => 'adminAuth'], static function ($route) {
     $route->post('customer/update/(:num)', "Customers::add/$1");
     $route->get('customer/delete/(:num)', "Customers::delete/$1");
     $route->get('customer/undo-delete/(:num)', "Customers::undoDelete/$1");
+
+    //service
+    
 });
