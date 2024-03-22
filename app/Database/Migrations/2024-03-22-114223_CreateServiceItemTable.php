@@ -26,6 +26,16 @@ class CreateServiceItemTable extends Migration
             'comment' => [
                 'type' => 'TEXT',
             ],
+            'created_at' => [
+                'type' => 'DATETIME',
+            ],
+            'updated_at' => [
+                'type' => 'DATETIME',
+            ],
+            'deleted_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
         ]);
         $this->forge->addKey('id', true);
         $this->forge->addForeignKey('customer_service_id', 'customer_services', 'id', 'CASCADE', 'CASCADE');

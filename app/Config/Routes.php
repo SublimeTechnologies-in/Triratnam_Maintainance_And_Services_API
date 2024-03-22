@@ -46,5 +46,5 @@ $routes->group('/admin', ['filter' => 'adminAuth'], static function ($route) {
     $route->get('customer/undo-delete/(:num)', "Customers::undoDelete/$1");
 
     //service
-    
+    $route->get('customer/purchase/(:num)/(:num)', "Services::add/$1/$2");
 });
