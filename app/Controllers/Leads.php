@@ -13,7 +13,10 @@ class Leads extends ResourceController
     {
         $response = ['success' => false, 'message' => 'No Leads Found'];
         $leadModel = new LeadModel();
-        $leads = $leadModel->findAll();
+        $leads = $leadModel
+            ->select('leads.*,u.name as employee_name')
+            ->join('users as u', 'u.id = leads.user_id')
+            ->findAll();
         if (empty($leads))
             return $this->respond($response);
         return $this->respond(['success' => true, 'data' => $leads, 'message' => '']);
@@ -21,6 +24,7 @@ class Leads extends ResourceController
 
     public function add($id = null)
     {
+        $leadId = 0;
         $rules = [
             'shop_name'        => 'required',
             'owner_name'       => 'required',
@@ -40,16 +44,22 @@ class Leads extends ResourceController
             'owner_name'       => $this->request->getVar('owner_name'),
             'contact_number'   => $this->request->getVar('contact_number'),
             'whatsapp_number'  => $this->request->getVar('whatsapp_number'),
-            'address'          => $this->request->getVar('address')
+            'address'          => $this->request->getVar('address'),
+            'user_id' => $this->request->user->id,
         ];
 
         if ($id) {
+            $leadId = $id;
             $leadModel->update($id, $leadData);
         } else {
-            $leadModel->insert($leadData);
+            $leadId = $leadModel->insert($leadData);
         }
 
-        return $this->respond(['success' => true, 'message' => 'Lead ' . ($id ? 'updated' : 'added') . ' successfully']);
+        $profile = $leadModel
+            ->select('leads.*,u.name as employee_name')
+            ->join('users as u', 'u.id = leads.user_id')
+            ->find($leadId);
+        return $this->respond(['success' => true, 'message' => 'Lead ' . ($id ? 'updated' : 'added') . ' successfully', 'data' => $profile]);
     }
 
     public function delete($id = null)

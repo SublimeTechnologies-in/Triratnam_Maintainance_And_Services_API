@@ -10,7 +10,7 @@ class LeadFollowups extends ResourceController
     public function get($lead_id = null)
     {
         $followUpModel = new LeadFollowupModel();
-        $followUp = $followUpModel->where('lead_id', $lead_id)->orderBy('id', 'desc')->findAll();
+        $followUp = $followUpModel->select('lead_followups.*,u.name as employee_name')->join('users as u', 'u.id = lead_followups.employee_id','left')->where('lead_id', $lead_id)->orderBy('id', 'desc')->findAll();
         if ($followUp) {
             return  $this->respond(["success" => true, 'data' => $followUp]);
         } else {

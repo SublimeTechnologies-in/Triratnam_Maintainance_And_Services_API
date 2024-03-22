@@ -36,6 +36,10 @@ class CreateLeadsTable extends Migration
                 'type'       => 'TEXT',
                 'null'       => true,
             ],
+            'user_id' => [
+                'type'       => 'int',
+                'unsigned'       => true,
+            ],
             'created_at' => [
                 'type'       => 'DATETIME',
                 'null'       => true,
@@ -50,6 +54,7 @@ class CreateLeadsTable extends Migration
             ],
         ]);
         $this->forge->addPrimaryKey('id');
+        $this->forge->addForeignKey('user_id','users','id','CASCADE','CASCADE');
         $this->forge->createTable('leads');
     }
 

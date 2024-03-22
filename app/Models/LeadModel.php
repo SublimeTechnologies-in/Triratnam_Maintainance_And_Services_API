@@ -18,6 +18,7 @@ class LeadModel extends Model
         "contact_number",
         "whatsapp_number",
         "address",
+        "user_id"
     ];
 
     // Dates
