@@ -36,4 +36,11 @@ $routes->group('/admin', ['filter' => 'adminAuth'], static function ($route) {
     $route->get('follow-up/get/(:num)', "LeadFollowups::get/$1");
     $route->post('follow-up/add', "LeadFollowups::add");
     $route->get('follow-up/delete/(:num)', "LeadFollowups::delete/$1");
+
+    //customer
+    $route->get('customer/get', "Customers::get");
+    $route->post('customer/add', "Customers::add");
+    $route->post('customer/update/(:num)', "Customers::add/$1");
+    $route->get('customer/delete/(:num)', "Customers::delete/$1");
+    $route->get('customer/undo-delete/(:num)', "Customers::undoDelete/$1");
 });
