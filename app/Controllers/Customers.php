@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\CustomerModel;
+use App\Models\LeadModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class Customers extends ResourceController
@@ -94,5 +95,42 @@ class Customers extends ResourceController
         $db->table('customers')->where('id', $id)->update(["deleted_at" => NULL]);
 
         return $this->respond(['success' => true, 'message' => 'Customer undeleted successfully']);
+    }
+
+    public function convertLeadToCustomer($leadId = null)
+    {
+        if ($leadId === null) {
+            return $this->respond(['message' => 'Lead ID is required', 'success' => false]);
+        }
+
+        $leadModel = new LeadModel();
+        $lead = $leadModel->find($leadId);
+
+        if (!$lead) {
+            return $this->respond(['message' => 'Lead not found', 'success' => false]);
+        }
+
+        // Prepare data for customer creation
+        $customerData = [
+            'shop_name'        => $lead['shop_name'],
+            'owner_name'       => $lead['owner_name'],
+            'contact_number'   => $lead['contact_number'],
+            'whatsapp_number'  => $lead['whatsapp_number'],
+            'address'          => $lead['address'],
+            'user_id'          => $lead['user_id']
+        ];
+
+        // Create a new customer record
+        $customerModel = new CustomerModel();
+        $customerId = $customerModel->insert($customerData);
+
+        if (!$customerId) {
+            return $this->respond(['message' => 'Failed to convert lead to customer', 'success' => false]);
+        }
+
+        // Delete the lead
+        $leadModel->delete($leadId);
+
+        return $this->respond(['success' => true, 'message' => 'Lead converted to customer successfully', 'customer_id' => $customerId]);
     }
 }
