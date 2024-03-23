@@ -29,8 +29,12 @@ class Customers extends ResourceController
             'contact_number'   => 'required|numeric',
             'whatsapp_number' => 'required|numeric',
             'address'          => 'required',
-            'shutter_image'    => 'uploaded[shutter_image]|max_size[shutter_image,1024]|ext_in[shutter_image,jpg,jpeg,png]'
         ];
+
+        if ($id == null) {
+            $rules['shutter_image']    = 'uploaded[shutter_image]|max_size[shutter_image,1024]|ext_in[shutter_image,jpg,jpeg,png]';
+        }
+
 
         if (!$this->validate($rules)) {
             return $this->respond(['message' => $this->validator->getErrors(), 'success' => false]);
@@ -60,7 +64,12 @@ class Customers extends ResourceController
                 $newName = 'customer_' . $customerId . '.' . $file->getClientExtension();
                 $file->move('assets/uploads', $newName);
                 $customerData['image'] = 'assets/uploads/' . $newName;
-
+                if ($id) {
+                    $old_img = $customerModel->find($customerId);
+                    if (file_exists($old_img['image'])) {
+                        unlink($old_img['image']);
+                    }
+                }
                 // Compress image if size is more than 1 MB
                 $compressedImagePath = $this->compressImage('assets/uploads/' . $newName, 500 * 1024);
                 if ($compressedImagePath) {
