@@ -21,8 +21,8 @@ class Employees extends ResourceController
     {
         $rules = [
             'name'     => 'required',
-            'contact'  => 'required|numeric',
-            'address'  => 'required'
+            'contact' => 'required|numeric',
+            'address' => 'required'
         ];
 
         // Add password validation if $id is null
@@ -38,40 +38,51 @@ class Employees extends ResourceController
 
         $userModel = new User();
 
-        // Check if contact already exists, including soft deleted records
+        // Check if contact already exists, excluding the current user being updated
         if ($id) {
-            // If $id is not null, no need to check for existing contact for the same user
-            $existingEmployee = 0;
+            $existingEmployee = $userModel
+                ->where('contact', $contact)
+                ->where('id !=', $id) // Exclude the current user being updated
+                ->countAllResults();
         } else {
             $existingEmployee = $userModel
                 ->where('contact', $contact)
-                ->orWhere('contact', $contact) // Check also if the contact exists in soft deleted records
                 ->countAllResults();
         }
 
-        if ($existingEmployee != 0) {
+        if ($existingEmployee > 0) {
             return $this->respond(['message' => 'Contact already exists', 'success' => false]);
         }
 
         $userData = [
             'name'     => $this->request->getPost('name'),
-            'contact'  => $contact,
-            'address'  => $this->request->getPost('address'),
+            'contact' => $contact,
+            'address' => $this->request->getPost('address'),
             // Add user_type only if not updating
             'user_type' => (!$id) ? 'employee' : null
         ];
 
         if (!$id) {
             // If $id is null, insert a new record
-            $userData['password'] = md5($this->request->getPost('password'));
-            $userModel->insert($userData);
+            $userData['password'] = password_hash($this->request->getPost('password'), PASSWORD_DEFAULT);
+            try {
+                $userModel->insert($userData);
+            } catch (\Exception $e) {
+                return $this->respond(['message' => 'Failed to add user: ' . $e->getMessage(), 'success' => false]);
+            }
         } else {
             // If $id is not null, update the existing record
-            $userModel->update($id, $userData);
+            try {
+                $userModel->update($id, $userData);
+            } catch (\Exception $e) {
+                return $this->respond(['message' => 'Failed to update user: ' . $e->getMessage(), 'success' => false]);
+            }
         }
 
         return $this->respond(['success' => true, 'message' => 'Employee ' . ($id ? 'updated' : 'added') . ' successfully']);
     }
+
+
 
 
 
