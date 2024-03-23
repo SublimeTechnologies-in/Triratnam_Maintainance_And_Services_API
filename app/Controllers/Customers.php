@@ -23,13 +23,13 @@ class Customers extends ResourceController
 
     public function add($id = null)
     {
-        $customerId = 0;
         $rules = [
             'shop_name'        => 'required',
             'owner_name'       => 'required',
             'contact_number'   => 'required|numeric',
-            'whatsapp_number'  => 'required|numeric',
-            'address'          => 'required'
+            'whatsapp_number' => 'required|numeric',
+            'address'          => 'required',
+            'shutter_image'    => 'uploaded[shutter_image]|max_size[shutter_image,1024]|ext_in[shutter_image,jpg,jpeg,png]'
         ];
 
         if (!$this->validate($rules)) {
@@ -42,22 +42,69 @@ class Customers extends ResourceController
             'shop_name'        => $this->request->getVar('shop_name'),
             'owner_name'       => $this->request->getVar('owner_name'),
             'contact_number'   => $this->request->getVar('contact_number'),
-            'whatsapp_number'  => $this->request->getVar('whatsapp_number'),
+            'whatsapp_number' => $this->request->getVar('whatsapp_number'),
             'address'          => $this->request->getVar('address'),
             'user_id' => $this->request->user->id,
         ];
 
         if ($id) {
-            $customerId = $id;
             $customerModel->update($id, $customerData);
+            $customerId = $id;
         } else {
             $customerId = $customerModel->insert($customerData);
         }
 
-        $profile = $customerModel
-            ->find($customerId);
+        // Handle file upload after the entry is made
+        if ($file = $this->request->getFile('shutter_image')) {
+            if ($file->isValid() && !$file->hasMoved()) {
+                $newName = 'customer_' . $customerId . '.' . $file->getClientExtension();
+                $file->move('assets/uploads', $newName);
+                $customerData['image'] = 'assets/uploads/' . $newName;
+
+                // Compress image if size is more than 1 MB
+                $compressedImagePath = $this->compressImage('assets/uploads/' . $newName, 500 * 1024);
+                if ($compressedImagePath) {
+                    $customerData['image'] = $compressedImagePath;
+                }
+
+                // Update the database with the new image path
+                $customerModel->update($customerId, ['image' => $customerData['image']]);
+            }
+        }
+
+        $profile = $customerModel->find($customerId);
         return $this->respond(['success' => true, 'message' => 'Customer ' . ($id ? 'updated' : 'added') . ' successfully', 'data' => $profile]);
     }
+
+    private function compressImage($imagePath, $maxSize)
+    {
+        $imageInfo = getimagesize($imagePath);
+        $mime = $imageInfo['mime'];
+
+        if ($mime == 'image/jpeg') {
+            $image = imagecreatefromjpeg($imagePath);
+        } elseif ($mime == 'image/png') {
+            $image = imagecreatefrompng($imagePath);
+        }
+
+        $fileSize = filesize($imagePath);
+
+        if ($fileSize > $maxSize) {
+            $quality = 100; // Start with 100% quality
+            while ($fileSize > $maxSize && $quality > 0) {
+                $quality -= 10; // Reduce quality by 10%
+                if ($mime == 'image/jpeg') {
+                    imagejpeg($image, $imagePath, $quality);
+                } elseif ($mime == 'image/png') {
+                    imagepng($image, $imagePath, 9 - ($quality / 10));
+                }
+                $fileSize = filesize($imagePath);
+            }
+        }
+
+        return $imagePath;
+    }
+
 
     public function delete($id = null)
     {

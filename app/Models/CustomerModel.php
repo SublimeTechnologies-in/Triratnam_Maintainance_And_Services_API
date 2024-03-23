@@ -12,7 +12,7 @@ class CustomerModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
-    protected $allowedFields    = ['shop_name', 'owner_name', 'contact_number', 'whatsapp_number', 'address', 'user_id'];
+    protected $allowedFields    = ['shop_name', 'owner_name', 'contact_number', 'whatsapp_number', 'address', 'user_id', 'image'];
 
     // Dates
     protected $useTimestamps = true;

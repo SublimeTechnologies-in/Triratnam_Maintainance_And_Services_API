@@ -131,3 +131,5 @@ public/assets/executive/*
 public/assets/client/*
 !public/assets/client/index.html
 public/assets/user/*
+public/assets/uploads/*
+!public/assets/uploads/index.html

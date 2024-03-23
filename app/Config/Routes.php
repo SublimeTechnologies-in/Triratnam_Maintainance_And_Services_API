@@ -47,4 +47,5 @@ $routes->group('/admin', ['filter' => 'adminAuth'], static function ($route) {
 
     //service
     $route->get('customer/purchase/(:num)/(:num)', "Services::add/$1/$2");
+    $route->get('customer/purchase/get/(:num)', "Services::get/$1");
 });
