@@ -62,14 +62,14 @@ class Customers extends ResourceController
         if ($file = $this->request->getFile('shutter_image')) {
             if ($file->isValid() && !$file->hasMoved()) {
                 $newName = 'customer_' . $customerId . '.' . $file->getClientExtension();
-                $file->move('assets/uploads', $newName);
-                $customerData['image'] = 'assets/uploads/' . $newName;
                 if ($id) {
                     $old_img = $customerModel->find($customerId);
                     if (file_exists($old_img['image'])) {
                         unlink($old_img['image']);
                     }
                 }
+                $file->move('assets/uploads', $newName);
+                $customerData['image'] = 'assets/uploads/' . $newName;
                 // Compress image if size is more than 1 MB
                 $compressedImagePath = $this->compressImage('assets/uploads/' . $newName, 500 * 1024);
                 if ($compressedImagePath) {
