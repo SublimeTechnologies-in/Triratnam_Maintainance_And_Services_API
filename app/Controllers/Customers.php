@@ -15,6 +15,7 @@ class Customers extends ResourceController
         $response = ['success' => false, 'message' => 'No Customers Found'];
         $customerModel = new CustomerModel();
         $customers = $customerModel
+            ->select('customers.*,(select count(*) from customer_services where customer_id = customers.id and expiry_date >="' . date('Y-m-d') . '") as active_services')
             ->findAll();
         if (empty($customers))
             return $this->respond($response);

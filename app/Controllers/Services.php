@@ -55,4 +55,34 @@ class Services extends ResourceController
 
         return $this->respond(['success' => true, 'message' => 'Customer Service ' . ($id ? 'updated' : 'added') . ' successfully', 'data' => $customerServiceData]);
     }
+
+    public function getServicesByCustomerId($customer_id)
+    {
+        $customerServicesModel = new CustomerServicesModel();
+
+        // Retrieve all services for the given customer ID
+        $customerServices = $customerServicesModel
+            ->select('customer_services.expiry_date,customer_services.purchase_date,si.*')
+            ->join('service_item as si', 'si.customer_service_id = customer_services.id', 'left')
+            ->where('customer_id', $customer_id)
+            ->where('expiry_date >="' . date('Y-m-d') . '"')
+            ->findAll();
+
+        if (empty($customerServices)) {
+            return $this->respond(['message' => 'No services found for this customer', 'success' => false]);
+        }
+
+        $data = [];
+        foreach ($customerServices as $value) {
+            $data[$value['customer_service_id']][] = $value;
+        }
+
+        $finalData = [];
+        foreach ($data as $value) {
+            $finalData[] = $value;
+        }
+
+
+        return $this->respond(['success' => true, 'data' => $finalData]);
+    }
 }
