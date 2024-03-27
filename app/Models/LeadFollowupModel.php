@@ -12,7 +12,7 @@ class LeadFollowupModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['lead_id', 'employee_id', 'date', 'message'];
+    protected $allowedFields    = ['lead_id', 'employee_id', 'date', 'message', 'is_completed'];
 
     // Dates
     protected $useTimestamps = false;

@@ -35,6 +35,9 @@ $routes->group('/admin', ['filter' => 'adminAuth'], static function ($route) {
 
     //follow up
     $route->get('follow-up/get/(:num)', "LeadFollowups::get/$1");
+    $route->get('follow-up/get-all', "LeadFollowups::leadFilter");
+    $route->get('follow-up/get-all/(:num)', "LeadFollowups::leadFilter/$1");
+    $route->get('follow-up/lead-completed/(:num)', "LeadFollowups::leadCompleted/$1");
     $route->post('follow-up/add', "LeadFollowups::add");
     $route->get('follow-up/delete/(:num)', "LeadFollowups::delete/$1");
 
