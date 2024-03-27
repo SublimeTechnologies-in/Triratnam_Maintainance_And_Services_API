@@ -143,4 +143,16 @@ class Services extends ResourceController
 
         return $this->respond(['success' => true, 'data' => $query]);
     }
+
+    function markAsServiceComplete()
+    {
+        $db = db_connect();
+        $siId = $this->request->getPost('service_id');
+        $data['remark'] = $this->request->getPost('remark');
+        $undo = $this->request->getPost('undo') ?? null;
+        $data['servicing_date'] = date('Y-m-d'); // Get the current date
+        if ($undo != null) $data['servicing_date'] = null;
+        $db->table('service_item')->update($data, ['id' => $siId]);
+        return $this->respond(['success' => true, 'message' => ($undo != null) ? 'Service Unmarked As Completed' : 'Service Mark As Completed']);
+    }
 }
