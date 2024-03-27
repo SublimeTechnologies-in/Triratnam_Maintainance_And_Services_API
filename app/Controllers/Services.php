@@ -91,6 +91,7 @@ class Services extends ResourceController
         $db = db_connect();
         $currentDate = date('Y-m-d'); // Get the current date
         $filter = $this->request->getPost('filter') ?? null;
+        $limit = $this->request->getPost('limit') ?? null;
 
         // Start building the query
         $query = $db->table('service_item as si')
@@ -122,6 +123,8 @@ class Services extends ResourceController
             }
         }
 
+        if ($limit)
+            $query->limit($limit);
         // Execute the query and get the result
         $query = $query->get()->getResultArray();
 
