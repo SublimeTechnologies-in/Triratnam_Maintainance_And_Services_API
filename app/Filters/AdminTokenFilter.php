@@ -23,12 +23,6 @@ class AdminTokenFilter implements FilterInterface
             $decodedAccessToken = $jwtService->decodeToken($accessToken);
 
             if ($decodedAccessToken) {
-                //check user is admin only
-                if ($decodedAccessToken->data->user_type != 'admin')
-                    return Services::response()
-                        ->setJSON(['success' => false, 'message' => 'Access Deny'])
-                        ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
-
                 $request->user = $decodedAccessToken->data;
                 return $request;
             } else {
@@ -40,7 +34,6 @@ class AdminTokenFilter implements FilterInterface
                 ->setJSON(['success' => false, 'message' => 'Token Required'])
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
         }
-
     }
 
     protected function refreshToken(RequestInterface $request)
@@ -58,7 +51,6 @@ class AdminTokenFilter implements FilterInterface
 
                 return Services::response()
                     ->setJSON(['success' => false, 'message' => 'Token Expired', 'access-token' => $newAccessToken]);
-
             } else {
                 // Both access and refresh tokens are invalid
                 return Services::response()

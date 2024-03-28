@@ -7,6 +7,13 @@ use CodeIgniter\RESTful\ResourceController;
 
 class Employees extends ResourceController
 {
+    function __construct()
+    {
+        if ($this->request->user->user_type != "admin") {
+            return $this->respond(['success' => false, 'message' => 'Access Deny'], 403);
+        }
+    }
+
     public function get()
     {
         $response = ['success' => false, 'message' => 'No Employees Found'];

@@ -8,15 +8,15 @@ use CodeIgniter\RESTful\ResourceController;
 
 class Customers extends ResourceController
 {
-    protected $modelName = 'App\Models\CustomerModel';
-
     public function get()
     {
         $response = ['success' => false, 'message' => 'No Customers Found'];
         $customerModel = new CustomerModel();
-        $customers = $customerModel
-            ->select('customers.*,(select count(*) from customer_services where customer_id = customers.id and expiry_date >="' . date('Y-m-d') . '") as active_services')
-            ->findAll();
+        $customers = $customerModel;
+        $customers->select('customers.*,(select count(*) from customer_services where customer_id = customers.id and expiry_date >="' . date('Y-m-d') . '") as active_services');
+        if ($this->request->user->user_type == "executive")
+            $customers->where('user_id', $this->request->user->id);
+        $customers = $customers->findAll();
         if (empty($customers))
             return $this->respond($response);
         return $this->respond(['success' => true, 'data' => $customers, 'message' => '']);
@@ -33,7 +33,7 @@ class Customers extends ResourceController
         ];
 
         if ($id == null) {
-            $rules['shutter_image']    = 'uploaded[shutter_image]|max_size[shutter_image,1024]|ext_in[shutter_image,jpg,jpeg,png]';
+            $rules['shutter_image'] = 'uploaded[shutter_image]|max_size[shutter_image,1024]|ext_in[shutter_image,jpg,jpeg,png]';
         }
 
 

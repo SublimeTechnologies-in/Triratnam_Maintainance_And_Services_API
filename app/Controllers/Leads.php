@@ -7,16 +7,16 @@ use CodeIgniter\RESTful\ResourceController;
 
 class Leads extends ResourceController
 {
-    protected $modelName = 'App\Models\LeadModel';
-
     public function get()
     {
         $response = ['success' => false, 'message' => 'No Leads Found'];
         $leadModel = new LeadModel();
-        $leads = $leadModel
-            ->select('leads.*,u.name as employee_name')
-            ->join('users as u', 'u.id = leads.user_id')
-            ->findAll();
+        $leads = $leadModel;
+        $leads->select('leads.*,u.name as employee_name');
+        $leads->join('users as u', 'u.id = leads.user_id');
+        if ($this->request->user->user_type == "executive")
+            $leads->where('user_id', $this->request->user->id);
+        $leads =  $leads->findAll();
         if (empty($leads))
             return $this->respond($response);
         return $this->respond(['success' => true, 'data' => $leads, 'message' => '']);
