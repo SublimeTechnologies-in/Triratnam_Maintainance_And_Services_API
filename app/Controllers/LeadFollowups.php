@@ -65,6 +65,8 @@ class LeadFollowups extends ResourceController
         $followUp = $followUpModel;
         $followUp->select('lead_followups.*,u.name as employee_name');
         $followUp->join('users as u', 'u.id = lead_followups.employee_id', 'left');
+        if ($this->request->user->user_type == 'executive')
+            $followUp->where('employee_id', $this->request->user->id);
         $followUp->where('is_completed', null);
         $followUp->orderBy('id', 'desc');
         if ($limit != null) {
