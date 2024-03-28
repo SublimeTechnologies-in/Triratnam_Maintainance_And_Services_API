@@ -24,7 +24,7 @@ class Dashboard extends ResourceController
         $leads = $db->table('leads');
         if ($userType == 'executive')
             $leads->where('user_id', $userId);
-        $data['leads'] = $leads->countAllResults();
+        $data['leads_count'] = $leads->countAllResults();
 
         $pendingService = $db->table('service_item as si');
         $pendingService->join('customer_services as cs', 'cs.id = si.customer_service_id');
