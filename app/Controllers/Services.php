@@ -95,7 +95,7 @@ class Services extends ResourceController
 
         // Start building the query
         $query = $db->table('service_item as si')
-            ->select('si.id, si.date, si.comment, c.shop_name, c.owner_name, c.contact_number, c.whatsapp_number, c.address,si.servicing_date,si.remark,
+            ->select('si.id, cs.id as service_id,si.date, si.comment, c.shop_name, c.owner_name, c.contact_number, c.whatsapp_number, c.address,si.servicing_date,si.remark,
              (DATEDIFF(si.date, "' . $currentDate . '") > 0) AS is_upcoming,
              (DATEDIFF(si.date, "' . $currentDate . '") = 0) AS is_pending,
              (DATEDIFF(si.date, "' . $currentDate . '") < 0) AS is_due,
@@ -154,5 +154,12 @@ class Services extends ResourceController
         if ($undo != null) $data['servicing_date'] = null;
         $db->table('service_item')->update($data, ['id' => $siId]);
         return $this->respond(['success' => true, 'message' => ($undo != null) ? 'Service Unmarked As Completed' : 'Service Mark As Completed']);
+    }
+
+    function deleteService($id)
+    {
+        $customerServicesModel = new CustomerServicesModel();
+        $customerServicesModel->delete($id);
+        return $this->respond(['success' => true, 'message' => 'Deletep successful']);
     }
 }

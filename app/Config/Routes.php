@@ -51,6 +51,7 @@ $routes->group('/admin', ['filter' => 'adminAuth'], static function ($route) {
     //service
     $route->get('customer/service/add/(:num)/(:num)', "Services::add/$1/$2");
     $route->get('customer/service/get/(:num)', "Services::get/$1");
+    $route->get('customer/service/delete/(:num)', "Services::deleteService/$1");
     $route->get('customer/service/get-by-customer-id/(:num)', "Services::getServicesByCustomerId/$1");
     $route->post('customer/service/get-all-services', "Services::getAllServices");
     $route->post('customer/service/mark-as-complete', "Services::markAsServiceComplete");

@@ -10,7 +10,7 @@ class CustomerServicesModel extends Model
     protected $primaryKey = 'id';
 
     protected $returnType = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
     protected $allowedFields = ['customer_id', 'service_master_id', 'purchase_date', 'expiry_date', 'user_id'];
 
