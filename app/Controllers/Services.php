@@ -102,6 +102,7 @@ class Services extends ResourceController
              DATEDIFF(si.date, "' . $currentDate . '") AS days_remaining');
         $query->join('customer_services as cs', 'cs.id = si.customer_service_id', 'left');
         $query->join('customers as c', 'c.id = cs.customer_id', 'left');
+        $query->where('si.servicing_date IS NULL');
         if ($this->request->user->user_type == "executive")
             $query->where('c.user_id', $this->request->user->id);
         $query = $query->orderBy('si.date', 'ASC');;

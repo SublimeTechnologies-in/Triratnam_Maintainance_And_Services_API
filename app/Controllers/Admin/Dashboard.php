@@ -2,78 +2,117 @@
 
 namespace App\Controllers\Admin;
 
-use App\Models\Client;
-use App\Models\Credential;
-use App\Models\Executive;
-use App\Models\Transaction;
-use App\Models\User;
+use App\Controllers\Employees;
+use App\Models\CustomerServicesModel;
+use App\Models\LeadFollowupModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class Dashboard extends ResourceController
 {
     public function index()
     {
-        $data = [];
-        $executiveModel = new Executive();
-        $clientModel = new Client();
-        $userModel = new User();
-        $transactionModel = new Transaction();
-        $credentialModel = new Credential();
-        $userData = $this->request->user;
-        $userType = $userData->user_type; // admin/executive
-        $userId = $userData->id;
+        $userType = $this->request->user->user_type;
+        $userId = $this->request->user->id;
+        $db = db_connect();
+        $data['employees'] = $db->table('users')->countAllResults();
 
-        $data['executives'] = ($userType === 'executive') ? 1 : $executiveModel->countAllResults();
-        $data['clients'] = ($userType === 'executive') ? $credentialModel->where('ref_id', $userId)->where('user_type', 'client')->countAllResults() : $credentialModel->countAllResults();
-        $data['users'] = ($userType === 'executive') ? $credentialModel->where('ref_id', $userId)->where('user_type', 'user')->countAllResults() : $credentialModel->countAllResults();
-
-        $data['thisMonthClients'] = ($userType === 'executive') ? $credentialModel->where('ref_id', $userId)->where('user_type', 'client')->where('MONTH(created_at) = ' . date('m'))->countAllResults() : $credentialModel->countAllResults();
-        $data['thisMonthUsers'] = ($userType === 'executive') ? $credentialModel->where('ref_id', $userId)->where('user_type', 'user')->where('MONTH(created_at) = ' . date('m'))->countAllResults() : $credentialModel->countAllResults();
-
-        // Using Query Builder for transactions
-        $transactions = $transactionModel->select('transactions.*,c.name as name');
-        $transactions->join('credentials as c', 'c.id = transactions.user_id');
-        $transactions->where('coins < 0');
+        $customer = $db->table('customers');
         if ($userType == 'executive')
-            $transactions->where('user_id', $userId);
-        $transactions->orderBy('id', 'desc');
-        $transactions->limit(10);
-        $transactions = $transactions->findAll();
-        $data['transactions'] = $transactions;
+            $customer->where('user_id', $userId);
+        $data['customers'] = $customer->countAllResults();
 
-        $data['coins'] = $transactionModel->select('total')->where('user_id', $userId)->orderBy('id', 'desc')->first();
+        $leads = $db->table('leads');
+        if ($userType == 'executive')
+            $leads->where('user_id', $userId);
+        $data['leads'] = $leads->countAllResults();
 
-        $data['graph']['executives'] = [];
-        if ($userType == 'admin') {
-            $executiveGraphData = $executiveModel->select('MONTH(executives.created_at) AS month, YEAR(executives.created_at) AS YEAR, COUNT(*) AS count');
-            $executiveGraphData->join('credentials', 'executives.credential_id = credentials.id');
-            $executiveGraphData->where('executives.created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)');
-            $executiveGraphData->groupBy('YEAR(executives.created_at), MONTH(executives.created_at)');
-            $executiveGraphData->orderBy('YEAR ASC, MONTH ASC');
-            $data['graph']['executives'] = $executiveGraphData->findAll();
+        $pendingService = $db->table('service_item as si');
+        $pendingService->join('customer_services as cs', 'cs.id = si.customer_service_id');
+        $pendingService->join('customers as c', 'c.id = cs.customer_id');
+        $pendingService->where('si.servicing_date IS NULL');
+        if ($userType == 'executive')
+            $pendingService->where('c.user_id', $userId);
+        $data['pending_services'] = $pendingService->countAllResults();
+
+        $data['upcoming_services'] = $this->services($userId, $userType);
+        $data['leads'] = $this->lead($userId, $userType);
+
+        return $this->respond(['success' => true, 'data' => $data]);
+    }
+
+    private function services($userId, $userType)
+    {
+        $db = db_connect();
+        $currentDate = date('Y-m-d'); // Get the current date
+        $filter = $this->request->getPost('filter') ?? null;
+        $limit = $this->request->getPost('limit') ?? null;
+
+        // Start building the query
+        $query = $db->table('service_item as si');
+        $query->select('si.id, cs.id as service_id,si.date, si.comment, c.shop_name, c.owner_name, c.contact_number, c.whatsapp_number, c.address,si.servicing_date,si.remark,
+             (DATEDIFF(si.date, "' . $currentDate . '") > 0) AS is_upcoming,
+             (DATEDIFF(si.date, "' . $currentDate . '") = 0) AS is_pending,
+             (DATEDIFF(si.date, "' . $currentDate . '") < 0) AS is_due,
+             DATEDIFF(si.date, "' . $currentDate . '") AS days_remaining');
+        $query->join('customer_services as cs', 'cs.id = si.customer_service_id', 'left');
+        $query->join('customers as c', 'c.id = cs.customer_id', 'left');
+        $query->where('si.servicing_date IS NULL');
+        if ($userType == "executive")
+            $query->where('c.user_id', $userId);
+        $query = $query->orderBy('si.date', 'ASC');;
+
+        if ($filter) {
+            switch ($filter) {
+                case 'due':
+                    $query = $query->having('is_due', 1);
+                    break;
+                case 'pending':
+                    $query = $query->having('is_pending', 1);
+                    break;
+                case 'upcoming':
+                    $query = $query->having('is_upcoming', 1);
+                    break;
+                case 'completed':
+                    $query = $query->where('servicing_date IS NOT NULL');
+                    break;
+                default:
+                    return $this->respond(['success' => false, 'message' => 'Invalid filter value.']);
+            }
         }
 
 
-        $clientGraphData = $credentialModel->select('MONTH(credentials.created_at) AS month, YEAR(credentials.created_at) AS YEAR, COUNT(*) AS count');
-        // $clientGraphData->join('credentials', 'clients.credential_id = credentials.id');
-        if ($userType == 'executive')
-            $clientGraphData->where('credentials.ref_id', $userId);
-        $clientGraphData->where('credentials.user_type', 'client');
-        $clientGraphData->where('credentials.created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)');
-        $clientGraphData->groupBy('YEAR(credentials.created_at), MONTH(credentials.created_at)');
-        $clientGraphData->orderBy('YEAR ASC, MONTH ASC');
-        $data['graph']['clients'] = $clientGraphData->findAll();
+        $query->limit(10);
+        // Execute the query and get the result
+        $query = $query->get()->getResultArray();
 
+        // Calculate the status and days remaining for each service
+        foreach ($query as &$service) {
+            if ($service['is_upcoming']) {
+                $service['status'] = 'Upcoming';
+            } elseif ($service['is_pending']) {
+                $service['status'] = 'Pending';
+            } elseif ($service['is_due']) {
+                $service['status'] = 'Due';
+            }
+            // Convert days_remaining to a positive number if it's negative (due)
+            $service['days_remaining'] = $service['days_remaining'];
+        }
 
-        $userGraphData = $credentialModel->select('MONTH(credentials.created_at) AS month, YEAR(credentials.created_at) AS YEAR, COUNT(*) AS count');
+        return $query;
+    }
+
+    public function lead($userId, $userType)
+    {
+        $followUpModel = new LeadFollowupModel();
+        $followUp = $followUpModel;
+        $followUp->select('lead_followups.*,u.name as employee_name');
+        $followUp->join('users as u', 'u.id = lead_followups.employee_id', 'left');
+        $followUp->where('is_completed', null);
         if ($userType == "executive")
-            $userGraphData->where('credentials.ref_id', $userId);
-        $userGraphData->where('credentials.user_type', 'user');
-        $userGraphData->where('credentials.created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)');
-        $userGraphData->groupBy('YEAR(credentials.created_at), MONTH(credentials.created_at)');
-        $userGraphData->orderBy('YEAR ASC, MONTH ASC');
-        $data['graph']['users'] = $userGraphData->findAll();
-
-        return $this->respond(['success' => true, 'message' => 'received', 'data' => $data]);
+            $followUp->where('employee_id', $userId);
+        $followUp->orderBy('id', 'desc');
+        $followUp->limit(10);
+        $followUp = $followUp->findAll();
+        return $followUp;
     }
 }
