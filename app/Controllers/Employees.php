@@ -7,15 +7,11 @@ use CodeIgniter\RESTful\ResourceController;
 
 class Employees extends ResourceController
 {
-    function __construct()
+    public function get()
     {
         if ($this->request->user->user_type != "admin") {
             return $this->respond(['success' => false, 'message' => 'Access Deny'], 403);
         }
-    }
-
-    public function get()
-    {
         $response = ['success' => false, 'message' => 'No Employees Found'];
         $userModel = new User();
         $employees = $userModel->where('user_type !=', 'admin')->findAll();
@@ -26,6 +22,9 @@ class Employees extends ResourceController
 
     public function add($id = null)
     {
+        if ($this->request->user->user_type != "admin") {
+            return $this->respond(['success' => false, 'message' => 'Access Deny'], 403);
+        }
         $rules = [
             'name'     => 'required',
             'contact' => 'required|numeric',
@@ -95,6 +94,9 @@ class Employees extends ResourceController
 
     public function delete($id = null)
     {
+        if ($this->request->user->user_type != "admin") {
+            return $this->respond(['success' => false, 'message' => 'Access Deny'], 403);
+        }
         if ($id === null) {
             return $this->failValidationError('Employee ID is required for deletion');
         }
@@ -113,6 +115,9 @@ class Employees extends ResourceController
 
     public function undoDelete($id = null)
     {
+        if ($this->request->user->user_type != "admin") {
+            return $this->respond(['success' => false, 'message' => 'Access Deny'], 403);
+        }
         if ($id === null) {
             return $this->respond(['message' => 'Employee ID is required', 'success' => false]);
         }
