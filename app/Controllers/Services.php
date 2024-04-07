@@ -95,13 +95,14 @@ class Services extends ResourceController
 
         // Start building the query
         $query = $db->table('service_item as si');
-        $query->select('si.id, cs.id as service_id,si.date, si.comment, c.shop_name, c.owner_name, c.contact_number, c.whatsapp_number, c.address,si.servicing_date,si.remark,
+        $query->select('si.id, cs.id as service_id,si.date, si.comment, c.shop_name, c.owner_name, c.contact_number, c.whatsapp_number, c.address,si.servicing_date,si.remark,u.name as employee,
              (DATEDIFF(si.date, "' . $currentDate . '") > 0) AS is_upcoming,
              (DATEDIFF(si.date, "' . $currentDate . '") = 0) AS is_pending,
              (DATEDIFF(si.date, "' . $currentDate . '") < 0) AS is_due,
              DATEDIFF(si.date, "' . $currentDate . '") AS days_remaining');
         $query->join('customer_services as cs', 'cs.id = si.customer_service_id', 'left');
         $query->join('customers as c', 'c.id = cs.customer_id', 'left');
+        $query->join('users as u', 'c.user_id = u.id', 'left');
         $query->where('si.servicing_date IS NULL');
         if ($this->request->user->user_type == "executive")
             $query->where('c.user_id', $this->request->user->id);

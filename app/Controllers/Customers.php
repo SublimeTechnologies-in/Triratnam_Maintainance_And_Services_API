@@ -62,7 +62,7 @@ class Customers extends ResourceController
         // Handle file upload after the entry is made
         if ($file = $this->request->getFile('shutter_image')) {
             if ($file->isValid() && !$file->hasMoved()) {
-                $newName = 'customer_' . $customerId . '.' . $file->getClientExtension();
+                echo $newName = 'customer_' . $customerId . '.' . $file->getClientExtension();
                 if ($id) {
                     $old_img = $customerModel->find($customerId);
                     if (file_exists($old_img['image'])) {
